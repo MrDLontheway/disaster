@@ -8,7 +8,7 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 
 
 @SpringBootApplication
-@MapperScan(basePackages = {"io.renren.modules.*.dao"})
+@MapperScan(basePackages = {"io.renren.modules.*.dao","com.wxstc.dl.mapper"})
 public class AdminApplication extends SpringBootServletInitializer {
 
 	public static void main(String[] args) {

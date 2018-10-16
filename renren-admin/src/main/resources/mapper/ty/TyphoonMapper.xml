@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wxstc.dl.mapper.TyphoonMapper">
+    <!--<resultMap id="BaseResultMap" type="com.wxstc.dl.bean.Typhoon">
+        <result column="province" jdbcType="VARCHAR" property="province" />
+        <result column="city" jdbcType="VARCHAR" property="city" />
+        <result column="county" jdbcType="VARCHAR" property="county" />
+        <result column="lon" jdbcType="VARCHAR" property="lon" />
+        <result column="lat" jdbcType="VARCHAR" property="lat" />
+        <result column="col_5" jdbcType="VARCHAR" property="col5" />
+    </resultMap>-->
+    <select id="selectAllInfo" parameterType="String" resultType="HashMap">
+      SELECT a.tid,a.tname,a.tnamecn,a.jianjie,a.status,
+        b.infoid,b.infotime,b.qiangdu,b.lat,b.lng,b.midqiya,b.maxsudu,b.fangxiang,b.yidongsudu
+      FROM typhoon a
+      LEFT JOIN typhoonInfo b on a.tid = b.tid
+        where (a.tnamecn LIKE concat('%',#{search},'%')) ORDER BY #{sort} #{order}
+        <!-- LEFT JOIN typhoonHack c on b.infoid = c.pinfoid -->
+    </select>
+</mapper>

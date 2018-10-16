@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>消息推送</title>
+    <#include "/header.html">
+        </head>
+<body>
+
+
+<div class="container">
+    <div id="toolbar">
+        <button id="remove" class="btn btn-danger" disabled>
+        <i class="glyphicon glyphicon-remove"></i> Delete
+        </button>
+    </div>
+    <table id="table"
+           data-toolbar="#toolbar"
+           data-search="true"
+           data-show-refresh="true"
+           data-show-toggle="true"
+           data-show-columns="true"
+           data-detail-view="true"
+           data-detail-formatter="detailFormatter"
+           data-minimum-count-columns="2"
+           data-show-pagination-switch="true"
+           data-pagination="true"
+           data-id-field="id"
+           data-page-list="[10, 25, 50, 100, ALL]"
+           data-show-footer="false"
+           data-side-pagination="server"
+           data-url="/admin/msg/getAllMsgs"
+           data-response-handler="responseHandler">
+    </table>
+</div>
+</body>
+<script>
+    var $table = $('#table'),
+        $remove = $('#remove'),
+        selections = [];
+
+    function initTable() {
+        $table.bootstrapTable({
+            height: getHeight(),
+            columns: [
+/*                [
+                    {
+                        field: 'state',
+                        checkbox: false,
+                        rowspan: 1,
+                        align: 'center',
+                        valign: 'middle'
+                    }, {
+                    title: 'ID',
+                    field: 'tid',
+                    rowspan: 2,
+                    align: 'center',
+                    valign: 'middle',
+                    sortable: true,
+                    footerFormatter: totalTextFormatter
+                }, {
+                    title: '台风信息',
+                    colspan: 11,
+                    align: 'center'
+                }
+                ],*/
+                [
+                    {
+                        checkbox: true, // 显示一个勾选框
+                        align: 'center' // 居中显示
+                    },
+                    {
+                        field: 'imgUrl',
+                        title: '轮播图地址',
+                        sortable: true,
+//                        footerFormatter: totalNameFormatter,
+                        align: 'center'
+                    },{
+                    field: 'title',
+                    title: '标题',
+                    sortable: true,
+//                        footerFormatter: totalNameFormatter,
+                    align: 'center'
+                }, {
+                    field: 'action',
+                    title: '跳转类型',
+                    sortable: true,
+                    align: 'center',
+//                    footerFormatter: totalPriceFormatter
+                },{
+                    field: 'url',
+                    title: '跳转地址',
+                    sortable: true,
+                    align: 'center',
+//                    footerFormatter: totalPriceFormatter
+                }
+                    , {
+                    field: 'sort',
+                    title: '排序',
+                    sortable: true,
+                    align: 'center',
+                    events: operateEvents,
+//                    formatter: operateFormatter
+                }, {
+                    field: 'updateTime',
+                    title: '更新时间',
+                    align: 'center',
+                    sortable: true,
+                    events: operateEvents,
+//                    formatter: operateFormatter
+                }
+                ]
+            ]
+        });
+        // sometimes footer render error.
+        setTimeout(function () {
+            $table.bootstrapTable('resetView');
+        }, 200);
+        $table.on('check.bs.table uncheck.bs.table ' +
+            'check-all.bs.table uncheck-all.bs.table', function () {
+            $remove.prop('disabled', !$table.bootstrapTable('getSelections').length);
+
+            // save your data, here just save the current page
+            selections = getIdSelections();
+            // push or splice the selections if you want to save all data selections
+        });
+        $table.on('expand-row.bs.table', function (e, index, row, $detail) {
+            if (index % 2 == 1) {
+                $detail.html('Loading from ajax request...');
+                $.get('LICENSE', function (res) {
+                    $detail.html(res.replace(/\n/g, '<br>'));
+                });
+            }
+        });
+        $table.on('all.bs.table', function (e, name, args) {
+            console.log(name, args);
+        });
+        $remove.click(function () {
+            var ids = getIdSelections();
+            $table.bootstrapTable('remove', {
+                field: 'id',
+                values: ids
+            });
+            $remove.prop('disabled', true);
+        });
+        $(window).resize(function () {
+            $table.bootstrapTable('resetView', {
+                height: getHeight()
+            });
+        });
+    }
+
+    function getIdSelections() {
+        return $.map($table.bootstrapTable('getSelections'), function (row) {
+            return row.id
+        });
+    }
+
+    function responseHandler(res) {
+        $.each(res.rows, function (i, row) {
+            row.state = $.inArray(row.id, selections) !== -1;
+        });
+        return res;
+    }
+
+    function detailFormatter(index, row) {
+        var html = [];
+        $.each(row, function (key, value) {
+            html.push('<p><b>' + key + ':</b> ' + value + '</p>');
+        });
+        return html.join('');
+    }
+
+    function operateFormatter(value, row, index) {
+        return [
+            '<a class="like" href="javascript:void(0)" title="Like">',
+            '<i class="fa fa-heart-o"></i>',
+            '</a>  ',
+            '<a class="remove" href="javascript:void(0)" title="Remove">',
+            '<i class="fa fa-trash"></i>',
+            '</a>'
+        ].join('');
+    }
+
+    window.operateEvents = {
+        'click .like': function (e, value, row, index) {
+            alert('You click like action, row: ' + JSON.stringify(row));
+        },
+        'click .remove': function (e, value, row, index) {
+            $table.bootstrapTable('remove', {
+                field: 'id',
+                values: [row.id]
+            });
+        }
+    };
+
+    function totalTextFormatter(data) {
+        return 'Total';
+    }
+
+    function totalNameFormatter(data) {
+        return data.length;
+    }
+
+    function totalPriceFormatter(data) {
+        var total = 0;
+        $.each(data, function (i, row) {
+            total += +(row.price.substring(1));
+        });
+        return '$' + total;
+    }
+
+    function getHeight() {
+        return $(window).height() - $('h1').outerHeight(true);
+    }
+
+    $(function () {
+        initTable();
+    });
+</script>
+</body>
+
+<!--<script type="text/javascript">
+    $("#table").bootstrapTable({ // 对应table标签的id
+        url: "<%=request.getContextPath()%>/msg/getAllMsgs", // 获取表格数据的url
+        cache: false, // 设置为 false 禁用 AJAX 数据缓存， 默认为true
+        striped: true,  //表格显示条纹，默认为false
+        pagination: true, // 在表格底部显示分页组件，默认false
+        pageList: [10, 20], // 设置页面可以显示的数据条数
+        pageSize: 10, // 页面数据条数
+        pageNumber: 1, // 首页页码
+        sidePagination: 'server', // 设置为服务器端分页
+        queryParams: function (params) { // 请求服务器数据时发送的参数，可以在这里添加额外的查询参数，返回false则终止请求
+
+            return {
+                pageSize: params.limit, // 每页要显示的数据条数
+                offset: params.offset, // 每页显示数据的开始行号
+                sort: params.sort, // 要排序的字段
+                sortOrder: params.order, // 排序规则
+                dataId: $("#dataId").val() // 额外添加的参数
+            }
+        },
+        sortName: 'tid', // 要排序的字段
+        sortOrder: 'desc', // 排序规则
+        columns: [
+            {
+                checkbox: true, // 显示一个勾选框
+                align: 'center' // 居中显示
+            } {
+                field: 'imgUrl',
+                title: '轮播图地址',
+                sortable: true,
+//                        footerFormatter: totalNameFormatter,
+                align: 'center'
+            },{
+                field: 'title',
+                title: '标题',
+                sortable: true,
+//                        footerFormatter: totalNameFormatter,
+                align: 'center'
+            }, {
+                field: 'action',
+                title: '跳转类型',
+                sortable: true,
+                align: 'center',
+//                    footerFormatter: totalPriceFormatter
+            },{
+                field: 'url',
+                title: '跳转地址',
+                sortable: true,
+                align: 'center',
+//                    footerFormatter: totalPriceFormatter
+            }
+            , {
+                field: 'sort',
+                title: '排序',
+                sortable: true,
+                align: 'center',
+                events: operateEvents,
+//                    formatter: operateFormatter
+            }, {
+                field: 'updateTime',
+                title: '更新时间',
+                align: 'center',
+                sortable: true,
+                events: operateEvents,
+//                    formatter: operateFormatter
+            }
+            /*, {
+                field: 'tid', // 返回json数据中的name
+                title: 'ID', // 表格表头显示文字
+                align: 'center', // 左右居中
+                valign: 'middle' // 上下居中
+            }, {
+                field: 'tname',
+                title: '名称',
+                align: 'center',
+                valign: 'middle'
+            }, {
+                field: 'calcMode',
+                title: '计算方式',
+                align: 'center',
+                valign: 'middle',
+                formatter: function (value, row, index){ // 单元格格式化函数
+                    var text = '-';
+                    if (value == 1) {
+                        text = "方式一";
+                    } else if (value == 2) {
+                        text = "方式二";
+                    } else if (value == 3) {
+                        text = "方式三";
+                    } else if (value == 4) {
+                        text = "方式四";
+                    }
+                    return text;
+                }
+            }, {
+                title: "",
+                align: 'center',
+                valign: 'middle',
+                width: 160, // 定义列的宽度，单位为像素px
+                formatter: function (value, row, index) {
+                    return '<button class="btn btn-primary btn-sm" onclick="del(\'' + row.stdId + '\')">删除</button>';
+                }
+            }*/
+        ],
+        onLoadSuccess: function(){  //加载成功时执行
+            console.info("加载成功");
+        },
+        onLoadError: function(){  //加载失败时执行
+            console.info("加载数据失败");
+        }
+
+    })
+
+</script>-->
+</html>
